@@ -15,7 +15,7 @@
   * You should have received a copy of the GNU General Public License
   * along with this program.  If not, see <http://www.gnu.org/licenses/>.
   */
- 
+
 #include <Ticker.h>
 #include "espnowhelper.h"
 #include "wifi.h"
@@ -119,7 +119,7 @@ static void lcdInit()
 static void lcdOn()
 {
     digitalWrite(lcdPowerPin, HIGH);
-    
+
     //not sure abt the delay yet.
     delay(200);
 
@@ -164,7 +164,7 @@ void setup()
 
     // Display on/off btn
     pinMode(buttonPin, INPUT_PULLUP);
-    
+
     delay(100);
 
     lcdInit();
@@ -291,17 +291,22 @@ void loop()
                     tankColor = ST7735_GREEN;
 
                 if (wi[i].percentage > 0)
+                {
                     tft.fillRoundRect(5, 110 - wi[i].percentage, 50, wi[i].percentage, 1, tankColor);
+                    tft.drawLine(60, 110 - wi[i].percentage, 60, 110, tankColor);
+                }
+
+                tft.setCursor(64, 110 - wi[i].percentage/2);
+                tft.printf("%dcm", wi[i].distance);
+
                 //show the reading
                 tft.setTextSize(2);
                 tft.setTextColor(tankColor);
-                tft.setCursor(90, 60);
+                tft.setCursor(105, 60);
                 tft.printf("%d%%", wi[i].percentage);
                 tft.setTextSize(1);
                 tft.setCursor(60, 100);
                 tft.setTextColor(ST7735_WHITE);
-
-                tft.printf("Tank Level:%dcm", wi[i].distance);
 
                 //draw WiFi icon
                 tft.drawXBitmap(140, 2, net_wifi4_bits, net_wifi4_width, net_wifi4_height, ST7735_CYAN);
