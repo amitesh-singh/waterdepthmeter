@@ -76,6 +76,7 @@ void setup()
 {
     #ifdef DEBUG
     Serial.begin(9600);
+    delay(100);
     #endif
     
     wi.sensorid = SENSOR_ID;
@@ -84,11 +85,11 @@ void setup()
     pinMode(ECHO, INPUT);
 
 #ifdef DEBUG
-    pinMode(BUILTIN_LED, OUTPUT);
-    digitalWrite(BUILTIN_LED, HIGH);
+   Serial.println("\r\n");
 #endif
 
-    Serial.println("\r\n");
+    pinMode(BUILTIN_LED, OUTPUT);
+    digitalWrite(BUILTIN_LED, HIGH);
 
     //init esp-now
     if (esp12e.init(WIFI_STA, ESP_NOW_ROLE_COMBO))
