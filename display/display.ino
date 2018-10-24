@@ -31,11 +31,11 @@
 #define TFT_DC     5
 
 #define DEBUG
-#define TFT_SCREEN_TIMEOUT 60
+#define TFT_SCREEN_TIMEOUT 120
 
 #define WIFI_CHANNEL 1
 //30s
-#define SLAVE_CONNECTION_TIMEOUT_LIMIT 30*1000
+#define SLAVE_CONNECTION_TIMEOUT_LIMIT 60*1000
 
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
 
@@ -55,7 +55,10 @@ static const uint8_t slaves_count = 1;
 static espnow espmaster;
 
 static uint8_t remoteMac[slaves_count][6] = {
-{ 0x18, 0xFE, 0x34, 0xE2, 0x16, 0x64},
+// mac address of bare esp12e board.
+ {0x18, 0xFE, 0x34, 0xE2, 0x0C, 0xAB},
+//Nodemcu mac
+//{ 0x18, 0xFE, 0x34, 0xE2, 0x16, 0x64},
 /*
 { 0x18, 0xFE, 0x34, 0xE2, 0x16, 0x64},
 { 0x18, 0xFE, 0x34, 0xE2, 0x16, 0x64},
