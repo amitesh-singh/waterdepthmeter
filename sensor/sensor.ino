@@ -21,8 +21,16 @@
 
 #define DEBUG
 #define SENSOR_ID 1
+//calculate battery life from : https://www.geekstips.com/battery-life-calculator-sleep-mode/
+// capacity: 2000mAh
+// During sleep: 0.02 mA ~ 22uA
+// current consumption during wake up: 80mA
+// For 30s, timeout - 120 times 
+// wakeup time ~ 1000mS
+// ~26 days 
+// for 60s, -- 52 days
 //in seconds
-#define SLEEP_PERIOD 10
+#define SLEEP_PERIOD 30
 
 // On Lollin board
 #define TRIGGER 5  // (D1)
