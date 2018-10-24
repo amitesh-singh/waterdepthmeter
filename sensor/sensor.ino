@@ -145,20 +145,23 @@ void setup()
 
 void loop()
 {
-    getDistance();
+     if (!retry)
+    {
+        getDistance();
 #ifdef DEBUG
-    Serial.println("Centimeter: ");
-    Serial.print(wi.distance);
-    Serial.print("; percentage: ");
-    Serial.print(wi.percentage);
-    Serial.println("");
+        Serial.println("Centimeter: ");
+        Serial.print(wi.distance);
+        Serial.print("; percentage: ");
+        Serial.print(wi.percentage);
+        Serial.println("");
 #endif
-    //digitalWrite(BUILTIN_LED, !digitalRead(BUILTIN_LED));
 
-    esp12e.send(NULL, (uint8_t *)&wi, sizeof(wi));
-    ++retransmit;
+        esp12e.send(NULL, (uint8_t *)&wi, sizeof(wi));
+        delay(100);
+        ++retransmit;
+    }
 
-    delay(100);
+    
     if (retry || retransmit >= 5)
     {
         //then deep sleep
