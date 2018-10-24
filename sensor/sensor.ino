@@ -155,8 +155,11 @@ void loop()
         Serial.print(wi.percentage);
         Serial.println("");
 #endif
+        //was it crashing because of NULL?,
+        // indeed, it was crashing because of null..
+        //esp12e.send(NULL, (uint8_t *)&wi, sizeof(wi));
+        esp12e.send(remoteMac, (uint8_t *)&wi, sizeof(wi));
 
-        esp12e.send(NULL, (uint8_t *)&wi, sizeof(wi));
         delay(100);
         ++retransmit;
     }
