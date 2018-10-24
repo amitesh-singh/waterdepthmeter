@@ -69,7 +69,7 @@ static espnow esp12e;
 //below mac is for my esp12e board
 static uint8_t remoteMac[] = {0x18, 0xFE, 0x34, 0xD3, 0x36, 0x76};
 
-static bool retry = false;
+static volatile bool retry = false;
 static uint8_t retransmit = 0;
 
 void setup()
