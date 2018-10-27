@@ -25,12 +25,14 @@
 #include <Adafruit_ST7735.h> // Hardware-specific library
 #include <SPI.h>
 
+//Comment out this code in production.
+#define DEBUG
+
 #define TFT_CS     4
 // Esp8266 RST is connected to TFT's RST
 #define TFT_RST    0
 #define TFT_DC     5
 
-#define DEBUG
 #define TFT_SCREEN_TIMEOUT 120
 
 #define WIFI_CHANNEL 1
