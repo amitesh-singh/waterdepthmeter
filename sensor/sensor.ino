@@ -1,4 +1,3 @@
-
 /*
   * Water Depth Meter
   * Copyright (C) 2018  Amitesh Singh <singh.amitesh@gmail.com>
@@ -19,7 +18,9 @@
 
 #include "espnowhelper.h"
 
+//TODO: comment it out in production code.
 #define DEBUG
+
 #define SENSOR_ID 1
 //calculate battery life from : https://www.geekstips.com/battery-life-calculator-sleep-mode/
 // capacity: 2000mAh
@@ -31,14 +32,26 @@
 // for 60s, -- 52 days
 //in seconds
 #define SLEEP_PERIOD 30
+#define WIFI_CHANNEL 1
 
-// On Lollin board
-#define TRIGGER 5  // (D1)
-#define ECHO  4  // D2
+const static u8 triggerPin = 5;  // D1
+const static u8 echoPin = 4;  // D2
+//GPIO 0
+const static u8 dcstepupPin = 0;
+
 //http://www.sintexplastics.com/wp-content/uploads/2017/04/ProductCatalogue2017.pdf
 // 1000l - dia (inches): 43.3, height (inches): 48.2, dia menhole: 15.7 inches
 // 48.2 inches = 122.4 cm
 const static long fullDistance = 123; // in cm
+
+static espnow esp12e;
+// below mac is of Lollin board - which does not have pins
+//static uint8_t remoteMac[] = {0x18, 0xFE, 0x34, 0xE1, 0xAC, 0x6A};
+//below mac is for my esp12e board
+static uint8_t remoteMac[] = {0x18, 0xFE, 0x34, 0xD3, 0x36, 0x76};
+
+static volatile bool retry = false;
+static uint8_t retransmit = 0;
 
 struct __attribute__((__packed__)) waterinfo
 {
@@ -49,36 +62,26 @@ struct __attribute__((__packed__)) waterinfo
 
 static waterinfo wi;
 
-//Code forCSR04 sonar sensor
+//Code for HCSR04 sonar sensor
 // need to power HCSR04 from 5v or else it won't work, i was getting 0cm reading earlier
 // connect 1k/2k resistor divider between ECHO 
 void getDistance()
 {
     long duration;
 
-    digitalWrite(TRIGGER, LOW);
+    digitalWrite(triggerPin, LOW);
     delayMicroseconds(2);
 
-    digitalWrite(TRIGGER, HIGH);
+    digitalWrite(triggerPin, HIGH);
     delayMicroseconds(10);
 
-    digitalWrite(TRIGGER, LOW);
+    digitalWrite(triggerPin, LOW);
 
-    duration = pulseIn(ECHO, HIGH);
+    duration = pulseIn(echoPin, HIGH);
 
-    wi.distance = (duration/2)/29.1;
+    wi.distance = duration * 0.01718; //(duration/2)/29.1;
     wi.percentage = (wi.distance*100)/fullDistance;
 }
-
-#define WIFI_CHANNEL 1
-static espnow esp12e;
-// below mac is of Lollin board - which does not have pins
-//static uint8_t remoteMac[] = {0x18, 0xFE, 0x34, 0xE1, 0xAC, 0x6A};
-//below mac is for my esp12e board
-static uint8_t remoteMac[] = {0x18, 0xFE, 0x34, 0xD3, 0x36, 0x76};
-
-static volatile bool retry = false;
-static uint8_t retransmit = 0;
 
 void setup()
 {
@@ -86,11 +89,15 @@ void setup()
     Serial.begin(9600);
     delay(100);
     #endif
-    
+
+    //switch on dc setup to power HC-SR04
+    pinMode(dcstepupPin, OUTPUT);
+    digitalWrite(dcstepupPin, HIGH);
+
     wi.sensorid = SENSOR_ID;
 
-    pinMode(TRIGGER, OUTPUT);
-    pinMode(ECHO, INPUT);
+    pinMode(triggerPin, OUTPUT);
+    pinMode(echoPin, INPUT);
 
 #ifdef DEBUG
    Serial.println("\r\n");
@@ -149,7 +156,7 @@ void loop()
     {
         getDistance();
 #ifdef DEBUG
-        Serial.println("Centimeter: ");
+        Serial.print("Centimeter: ");
         Serial.print(wi.distance);
         Serial.print("; percentage: ");
         Serial.print(wi.percentage);
@@ -157,6 +164,7 @@ void loop()
 #endif
         //was it crashing because of NULL?,
         // indeed, it was crashing because of null..
+        // nope, it was crashing because of noise at power rails.
         //esp12e.send(NULL, (uint8_t *)&wi, sizeof(wi));
         esp12e.send(remoteMac, (uint8_t *)&wi, sizeof(wi));
 
@@ -164,17 +172,16 @@ void loop()
         ++retransmit;
     }
 
-    
     if (retry || retransmit >= 5)
     {
         //then deep sleep
     #ifdef DEBUG
         Serial.println("going to deep sleep...");
     #endif
+        //switch off the dc steup module.
+        pinMode(dcstepupPin, LOW);
         //
-        // sleep for 10s
+        // Deep Sleep
          ESP.deepSleep(SLEEP_PERIOD*1000000, WAKE_RF_DEFAULT);
-        //ESP.restart();
-        //delay(100);
     }
 }
