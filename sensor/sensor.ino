@@ -58,6 +58,7 @@ struct __attribute__((__packed__)) waterinfo
     uint8_t sensorid;
     long distance;
     uint8_t percentage;
+    uint32_t batteryVoltage;
 };
 
 static waterinfo wi;
@@ -82,6 +83,12 @@ void getDistance()
     wi.distance = duration * 0.01718; //(duration/2)/29.1;
     wi.percentage = (wi.distance*100)/fullDistance;
 }
+
+/******* ADC Code to read battery voltage *************/
+
+ADC_MODE(ADC_VCC);
+
+/******************************************************/
 
 void setup()
 {
@@ -145,8 +152,11 @@ void setup()
     }
     );
 
+    wi.batteryVoltage = ESP.getVcc();
+
 #ifdef DEBUG
     Serial.print("Mac Addr: "); Serial.println(WiFi.macAddress());
+    Serial.print("System voltage (mV): "); Serial.println(wi.batteryVoltage);
 #endif
 }
 

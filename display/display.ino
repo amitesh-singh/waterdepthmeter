@@ -20,6 +20,7 @@
 #include "espnowhelper.h"
 #include "wifi.h"
 #include "down.h"
+#include "dish.h"
 
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ST7735.h> // Hardware-specific library
@@ -73,6 +74,7 @@ struct __attribute__((__packed__)) waterinfo
      uint8_t sensorid;
      long distance;
      uint8_t percentage;
+     uint32_t batteryVoltage;
  };
 
 struct __attribute__((__packed__)) ack
@@ -281,6 +283,8 @@ void loop()
             Serial.println(wi[i].distance);
             Serial.print("Percentage: ");
             Serial.println(wi[i].percentage);
+            Serial.print("Sensor Battery Voltage(mV): ");
+            Serial.println(wi[i].batteryVoltage);
 #endif
             digitalWrite(BUILTIN_LED, HIGH);
             if (displayOn)
@@ -315,7 +319,16 @@ void loop()
 
                 //draw WiFi icon
                 tft.drawXBitmap(140, 2, net_wifi4_bits, net_wifi4_width, net_wifi4_height, ST7735_CYAN);
+
+                //show battery voltage
+                tft.setCursor(75, 5);
+                tft.drawXBitmap(63, 5, dish_bits, dish_width, dish_height, ST7735_YELLOW);
+
+                tft.setTextColor(ST7735_MAGENTA);
+                tft.printf("%.2fV", wi[i].batteryVoltage/1000.0);
+
                 tft.setCursor(0, 0);
+                tft.setTextColor(ST7735_WHITE);
             }
         }
 
