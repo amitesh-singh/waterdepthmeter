@@ -348,8 +348,19 @@ void loop()
     if (!displayStatus)
     {
         //software debounce
-        delay(100);
-        if (!digitalRead(buttonPin))
+        delay(200);
+        displayStatus = digitalRead(buttonPin);
+
+        if (!displayStatus && displayOn)
+        {
+            timeout.detach();
+            lcdOff();
+         
+            #ifdef DEBUG
+            Serial.println("Switching off TFT since button is pressed again.");
+            #endif
+        }
+        else if (!displayStatus)
         {
         //Switch On the display and show the reading.
             #ifdef DEBUG
@@ -367,6 +378,5 @@ void loop()
             tft.print("Wait for a moment.");
 
         }
-
     }
 }
