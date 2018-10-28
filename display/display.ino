@@ -93,6 +93,15 @@ static uint16_t tankColor = ST7735_RED;
 
 static volatile bool displayOn = true;
 Ticker timeout;
+Ticker redLedBlinkTimer;
+
+const static u8 redLedPin =  2;//13;
+static bool redLedBlinking;
+
+static void _red_led_blink_cb()
+{
+    digitalWrite(redLedPin, !digitalRead(redLedPin));
+}
 
 static void displayBanner()
 {
@@ -159,6 +168,12 @@ void setup()
     Serial.println("................................");
     Serial.println("Master Display device controller");
 #endif
+
+    redLedBlinking = false;
+
+    pinMode(redLedPin, OUTPUT);
+    digitalWrite(redLedPin, HIGH);
+
     pinMode(lcdPowerPin, OUTPUT);
     digitalWrite(lcdPowerPin, HIGH);
 
@@ -287,55 +302,89 @@ void loop()
             Serial.println(wi[i].batteryVoltage);
 #endif
             digitalWrite(BUILTIN_LED, HIGH);
+            if (wi[i].percentage >= 0 && wi[i].percentage <= 25)
+              {
+                 if (!redLedBlinking)
+                   {
+                      redLedBlinkTimer.detach();
+                      redLedBlinkTimer.attach(1, _red_led_blink_cb);
+                      redLedBlinking = true;
+                   }
+              }
+            else if (wi[i].percentage > 25 && wi[i].percentage <= 50)
+              {
+                 if (redLedBlinking)
+                   {
+                      redLedBlinkTimer.detach();
+                      redLedBlinking = false;
+                      digitalWrite(redLedPin, HIGH);
+                   }
+              }
+            else
+              {
+                 if (redLedBlinking)
+                   {
+                      redLedBlinkTimer.detach();
+                      redLedBlinking = false;
+                      digitalWrite(redLedPin, HIGH);
+                   }
+              }
+
             if (displayOn)
-            {
-                tft.fillScreen(ST7735_BLACK);
+              {
+                 tft.fillScreen(ST7735_BLACK);
 
-                tft.drawRoundRect(5, 5, 50, 105, 5, ST7735_WHITE);
-                if (wi[i].percentage >= 0 && wi[i].percentage <= 25)
-                    tankColor = ST7735_RED;
-                else if (wi[i].percentage > 25 && wi[i].percentage <= 50)
-                    tankColor = ST7735_YELLOW;
-                else
-                    tankColor = ST7735_GREEN;
+                 tft.drawRoundRect(5, 5, 50, 105, 5, ST7735_WHITE);
+                 if (wi[i].percentage >= 0 && wi[i].percentage <= 25)
+                   {
+                      tankColor = ST7735_RED;
+                   }
+                 else if (wi[i].percentage > 25 && wi[i].percentage <= 50)
+                   {
+                      tankColor = ST7735_YELLOW;
+                   }
+                 else
+                   {
+                      tankColor = ST7735_GREEN;
+                   }
 
-                if (wi[i].percentage > 0)
-                {
-                    tft.fillRoundRect(5, 110 - wi[i].percentage, 50, wi[i].percentage, 1, tankColor);
-                    tft.drawLine(60, 110 - wi[i].percentage, 60, 110, tankColor);
-                }
+                 if (wi[i].percentage > 0)
+                   {
+                      tft.fillRoundRect(5, 110 - wi[i].percentage, 50, wi[i].percentage, 1, tankColor);
+                      tft.drawLine(60, 110 - wi[i].percentage, 60, 110, tankColor);
+                   }
 
-                tft.setCursor(64, 110 - wi[i].percentage/2);
-                tft.printf("%dcm", wi[i].distance);
+                 tft.setCursor(64, 110 - wi[i].percentage/2);
+                 tft.printf("%dcm", wi[i].distance);
 
-                //show the reading
-                tft.setTextSize(2);
-                tft.setTextColor(tankColor);
-                tft.setCursor(105, 60);
-                tft.printf("%d%%", wi[i].percentage);
-                tft.setTextSize(1);
-                tft.setCursor(60, 100);
-                tft.setTextColor(ST7735_WHITE);
+                 //show the reading
+                 tft.setTextSize(2);
+                 tft.setTextColor(tankColor);
+                 tft.setCursor(105, 60);
+                 tft.printf("%d%%", wi[i].percentage);
+                 tft.setTextSize(1);
+                 tft.setCursor(60, 100);
+                 tft.setTextColor(ST7735_WHITE);
 
-                //draw WiFi icon
-                tft.drawXBitmap(140, 2, net_wifi4_bits, net_wifi4_width, net_wifi4_height, ST7735_CYAN);
+                 //draw WiFi icon
+                 tft.drawXBitmap(140, 2, net_wifi4_bits, net_wifi4_width, net_wifi4_height, ST7735_CYAN);
 
-                //show battery voltage
-                tft.setCursor(75, 5);
-                tft.drawXBitmap(63, 5, dish_bits, dish_width, dish_height, ST7735_YELLOW);
+                 //show battery voltage
+                 tft.setCursor(75, 5);
+                 tft.drawXBitmap(63, 5, dish_bits, dish_width, dish_height, ST7735_YELLOW);
 
-                tft.setTextColor(ST7735_MAGENTA);
-                tft.printf("%.2fV", wi[i].batteryVoltage/1000.0);
+                 tft.setTextColor(ST7735_MAGENTA);
+                 tft.printf("%.2fV", wi[i].batteryVoltage/1000.0);
 
-                tft.setCursor(0, 0);
-                tft.setTextColor(ST7735_WHITE);
-            }
+                 tft.setCursor(0, 0);
+                 tft.setTextColor(ST7735_WHITE);
+              }
         }
 
-        if (millis() - timestamps[i] >= SLAVE_CONNECTION_TIMEOUT_LIMIT)
+      if (millis() - timestamps[i] >= SLAVE_CONNECTION_TIMEOUT_LIMIT)
         {
-            if (displayOn)
-            {
+           if (displayOn)
+             {
                 //tft.fillScreen(ST7735_YELLOW);
 
                 tft.setTextSize(2);
@@ -351,9 +400,9 @@ void loop()
                 //draw down
                 tft.drawXBitmap(140, 2, down_bits, down_width, down_height, ST7735_RED);
                 tft.drawLine(143, 4, 157, 18, ST7735_RED);
-            }
+             }
 #ifdef DEBUG
-            Serial.print("----->>>> sensor #"); Serial.print(wi[i].sensorid); Serial.println(" is offline.");
+           Serial.print("----->>>> sensor #"); Serial.print(wi[i].sensorid); Serial.println(" is offline.");
 #endif
         }
     }
@@ -361,37 +410,37 @@ void loop()
     displayStatus = digitalRead(buttonPin);
 
     if (!displayStatus)
-    {
-        //software debounce
-        delay(200);
-        displayStatus = digitalRead(buttonPin);
+      {
+         //software debounce
+         delay(200);
+         displayStatus = digitalRead(buttonPin);
 
-        if (!displayStatus && displayOn)
-        {
-            timeout.detach();
-            lcdOff();
-         
-            #ifdef DEBUG
-            Serial.println("Switching off TFT since button is pressed again.");
-            #endif
-        }
-        else if (!displayStatus)
-        {
-        //Switch On the display and show the reading.
-            #ifdef DEBUG
+         if (!displayStatus && displayOn)
+           {
+              timeout.detach();
+              lcdOff();
 
-            Serial.println("Button is pressed.");
-            Serial.println("Timer started and TFT is on now.");
-            #endif
+#ifdef DEBUG
+              Serial.println("Switching off TFT since button is pressed again.");
+#endif
+           }
+         else if (!displayStatus)
+           {
+              //Switch On the display and show the reading.
+#ifdef DEBUG
 
-            lcdOn();
-            timeout.detach();
-            timeout.attach(TFT_SCREEN_TIMEOUT, _timeout_cb);
-            
-            testdrawtext("Connecting..", ST7735_WHITE);
-            tft.println("");
-            tft.print("Wait for a moment.");
+              Serial.println("Button is pressed.");
+              Serial.println("Timer started and TFT is on now.");
+#endif
 
-        }
-    }
+              lcdOn();
+              timeout.detach();
+              timeout.attach(TFT_SCREEN_TIMEOUT, _timeout_cb);
+
+              testdrawtext("Connecting..", ST7735_WHITE);
+              tft.println("");
+              tft.print("Wait for a moment.");
+
+           }
+      }
 }
