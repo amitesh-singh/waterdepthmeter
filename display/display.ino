@@ -127,6 +127,7 @@ static void lcdInit()
 {
     // We have ST7735 black tab TFT
     tft.initR(INITR_BLACKTAB);
+    delay(500);
     tft.setRotation(3);
     tft.fillScreen(ST7735_BLACK);
     tft.setTextWrap(true);
@@ -187,7 +188,7 @@ void setup()
     // Display on/off btn
     pinMode(buttonPin, INPUT_PULLUP);
 
-    delay(100);
+    delay(500);
 
     lcdInit();
 
