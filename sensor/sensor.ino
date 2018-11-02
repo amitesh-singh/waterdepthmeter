@@ -63,6 +63,14 @@ struct __attribute__((__packed__)) waterinfo
 
 static waterinfo wi;
 
+static void resetHCSR04()
+{
+    pinMode(echoPin, OUTPUT);
+    digitalWrite(echoPin, LOW); // send a low pulse to echo pin
+    delayMicroseconds(200);
+    pinMode(echoPin, INPUT);
+}
+
 //Code for HCSR04 sonar sensor
 // need to power HCSR04 from 5v or else it won't work, i was getting 0cm reading earlier
 // connect 1k/2k resistor divider between ECHO 
@@ -80,7 +88,8 @@ void getDistance()
 
     //We wait for echo to come back, with the timeout of 20ms,
     // which corresponds to approximately 3m
-    duration = pulseIn(echoPin, HIGH, 20000);
+    // 400 * 29.4 * 2
+    duration = pulseIn(echoPin, HIGH, 23000);
 
     //sometimes, HCSR04 gets stuck in case of 0 readings.
     // i notice this after i run it for 2-3 days.
@@ -97,19 +106,18 @@ void getDistance()
         digitalWrite(dcstepupPin, HIGH);
         delay(50);
         */
-        
-        pinMode(echoPin, OUTPUT);
-        digitalWrite(echoPin, LOW); // send a low pulse to echo pin
-        delayMicroseconds(200);
-        pinMode(echoPin, INPUT);
+
+        resetHCSR04();
     }
 
     //29 - at room temperature
     // 29.4 at outdoors
     if (duration != 0)
-        wi.distance = (duration/2)/29.4; //(duration) * 0.017; //(duration/2)/29.4;
+      {
+         wi.distance = (duration/2)/29.4; //(duration) * 0.017; //(duration/2)/29.4;
+      }
     else
-        wi.distance = fullDistance;
+      wi.distance = fullDistance;
 
     wi.percentage = (wi.distance*100)/fullDistance;
 }
