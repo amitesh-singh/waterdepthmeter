@@ -69,7 +69,7 @@ static waterinfo wi;
 void getDistance()
 {
     long duration;
-
+   
     digitalWrite(triggerPin, LOW);
     delayMicroseconds(2);
 
@@ -87,13 +87,30 @@ void getDistance()
     // below is the fix for this:
     if (duration == 0) //if we timed out
     {
+        #ifdef DEBUG
+            Serial.println("Timed out, Resetting..");    
+        #endif
+        //reset the HCSR04 power rail
+        /*
+        digitalWrite(dcstepupPin, LOW);
+        delay(50);
+        digitalWrite(dcstepupPin, HIGH);
+        delay(50);
+        */
+        
         pinMode(echoPin, OUTPUT);
         digitalWrite(echoPin, LOW); // send a low pulse to echo pin
         delayMicroseconds(200);
         pinMode(echoPin, INPUT);
     }
 
-    wi.distance = duration * 0.01718; //(duration/2)/29.1;
+    //29 - at room temperature
+    // 29.4 at outdoors
+    if (duration != 0)
+        wi.distance = (duration/2)/29.4; //(duration) * 0.017; //(duration/2)/29.4;
+    else
+        wi.distance = fullDistance;
+
     wi.percentage = (wi.distance*100)/fullDistance;
 }
 
