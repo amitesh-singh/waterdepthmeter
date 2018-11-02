@@ -78,7 +78,20 @@ void getDistance()
 
     digitalWrite(triggerPin, LOW);
 
-    duration = pulseIn(echoPin, HIGH);
+    //We wait for echo to come back, with the timeout of 20ms,
+    // which corresponds to approximately 3m
+    duration = pulseIn(echoPin, HIGH, 20000);
+
+    //sometimes, HCSR04 gets stuck in case of 0 readings.
+    // i notice this after i run it for 2-3 days.
+    // below is the fix for this:
+    if (duration == 0) //if we timed out
+    {
+        pinMode(echoPin, OUTPUT);
+        digitalWrite(echoPin, LOW); // send a low pulse to echo pin
+        delayMicroseconds(200);
+        pinMode(echoPin, INPUT);
+    }
 
     wi.distance = duration * 0.01718; //(duration/2)/29.1;
     wi.percentage = (wi.distance*100)/fullDistance;
