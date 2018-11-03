@@ -232,12 +232,25 @@ void setup()
 
     espmaster.addRecvCb([](uint8_t *macaddr, uint8_t *data, uint8_t len)
     {
-#ifdef DEBUG
-         Serial.println("Recv_Cb");
-#endif
+
         digitalWrite(BUILTIN_LED, LOW);
         //get the data
         waterinfo *w = (waterinfo *)data;
+#ifdef DEBUG
+        Serial.println("Recv_Cb");
+        Serial.printf("-- d: %d, %d%%\r\n", w->distance, w->percentage);
+#endif
+        //ignore the timeout reading from HC-SR04 
+        // and show the last  time reading which we had.
+        if (w->distance == tankHeight)
+            {
+                reply[0] = true;
+                wi[0].distance = tankHeight - wi[0].distance;
+                wi[0].percentage = 100 - wi[0].percentage;
+                timestamps[0] = millis();
+                return;
+            }
+
         if (w->sensorid == 1)
         {
             reply[0] = true;
