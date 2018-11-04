@@ -93,6 +93,8 @@ static bool displayStatus = false;
 // gonna use 100cm as tankHeight
 const static u8 tankHeight = 123; //in cm
 const static u8 tankMinWaterHeight = 100; //in cm
+//blink led faster whenever water level is higher than this.
+const static u8 tankWaterLevelThresholdPercent = 82;
 
 static uint16_t tankColor = ST7735_RED;
 
@@ -393,6 +395,15 @@ void loop()
                       digitalWrite(redLedPin, HIGH);
                    }
               }
+            else if (wi[i].percentage > tankWaterLevelThresholdPercent)
+            {
+                if (!redLedBlinking)
+                {
+                    redLedBlinkTimer.detach();
+                    redLedBlinkTimer.attach(0.25, _red_led_blink_cb);
+                    redLedBlinking = true;
+                }
+            }
             else
               {
                  if (redLedBlinking)
