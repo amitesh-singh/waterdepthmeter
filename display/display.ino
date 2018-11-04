@@ -88,7 +88,12 @@ static volatile waterinfo wi[slaves_count];
 static volatile unsigned long timestamps[slaves_count];
 
 static bool displayStatus = false;
+//Seems like the pipe is attached  at 23cm from Bottom,
+// No water in Tap at 23cm from bottom
+// gonna use 100cm as tankHeight
 const static u8 tankHeight = 123; //in cm
+const static u8 tankMinWaterHeight = 100; //in cm
+
 static uint16_t tankColor = ST7735_RED;
 
 static volatile bool displayOn = true;
@@ -213,7 +218,6 @@ static void drawReadings(volatile struct waterinfo &w)
 
 void setup()
 {
-
 #ifdef DEBUG
     Serial.begin(9600);
     Serial.println("................................");
@@ -294,8 +298,8 @@ void setup()
         if (w->distance == tankHeight)
             {
                 reply[0] = true;
-                wi[0].distance = tankHeight - wi[0].distance;
-                wi[0].percentage = 100 - wi[0].percentage;
+                wi[0].distance = tankMinWaterHeight - wi[0].distance;
+                //wi[0].percentage = 100 - wi[0].percentage;
                 timestamps[0] = millis();
                 return;
             }
@@ -352,13 +356,15 @@ void loop()
             reply[i] = false;
 
             delay(10);
-            if (wi[i].distance > tankHeight)
-                wi[i].distance = tankHeight;
+            if (wi[i].distance > tankMinWaterHeight)
+                wi[i].distance = tankMinWaterHeight;
 
-            wi[i].distance = tankHeight - wi[i].distance;
+            wi[i].distance = tankMinWaterHeight - wi[i].distance;
             if (wi[i].percentage > 100)
                 wi[i].percentage = 100;
-            wi[i].percentage = 100 - wi[i].percentage;
+
+            wi[i].percentage = (wi[i].distance*100)/tankMinWaterHeight;
+            //wi[i].percentage = 100 - wi[i].percentage;
 #ifdef DEBUG
          //TODO: update the readings to serial or i2c/spi screen when you get the update        
             Serial.print("sensor #"); Serial.print(wi[i].sensorid); Serial.print(": ");
