@@ -161,6 +161,56 @@ static void _timeout_cb()
 #endif
 }
 
+static void drawReadings(volatile struct waterinfo &w)
+{
+   tft.fillScreen(ST7735_BLACK);
+
+   tft.drawRoundRect(5, 5, 50, 105, 5, ST7735_WHITE);
+   if (w.percentage >= 0 && w.percentage <= 25)
+     {
+        tankColor = ST7735_RED;
+     }
+   else if (w.percentage > 25 && w.percentage <= 50)
+     {
+        tankColor = ST7735_YELLOW;
+     }
+   else
+     {
+        tankColor = ST7735_GREEN;
+     }
+
+   if (w.percentage > 0)
+     {
+        tft.fillRoundRect(5, 110 - w.percentage, 50, w.percentage, 1, tankColor);
+        tft.drawLine(60, 110 - w.percentage, 60, 110, tankColor);
+     }
+
+   tft.setCursor(64, 110 - w.percentage/2);
+   tft.printf("%dcm", w.distance);
+
+   //show the last reading
+   tft.setTextSize(2);
+   tft.setTextColor(tankColor);
+   tft.setCursor(105, 60);
+   tft.printf("%d%%", w.percentage);
+   tft.setTextSize(1);
+   tft.setCursor(60, 100);
+   tft.setTextColor(ST7735_WHITE);
+
+   //draw WiFi icon
+   tft.drawXBitmap(140, 2, net_wifi4_bits, net_wifi4_width, net_wifi4_height, ST7735_CYAN);
+
+   //show battery voltage
+   tft.setCursor(75, 5);
+   tft.drawXBitmap(63, 5, dish_bits, dish_width, dish_height, ST7735_YELLOW);
+
+   tft.setTextColor(ST7735_MAGENTA);
+   tft.printf("%.2fV", w.batteryVoltage/1000.0);
+
+   tft.setCursor(0, 0);
+   tft.setTextColor(ST7735_WHITE);
+}
+
 void setup()
 {
 
@@ -232,7 +282,6 @@ void setup()
 
     espmaster.addRecvCb([](uint8_t *macaddr, uint8_t *data, uint8_t len)
     {
-
         digitalWrite(BUILTIN_LED, LOW);
         //get the data
         waterinfo *w = (waterinfo *)data;
@@ -286,9 +335,13 @@ void setup()
 
     tft.fillScreen(ST7735_BLACK);
     tft.setCursor(0, 0);
-
+    
+    testdrawtext("Connecting..", ST7735_WHITE);
+    tft.println("\r\n");
+    tft.print("Wait for a moment.");
+    tft.setCursor(0, 0);
     timeout.attach(TFT_SCREEN_TIMEOUT, _timeout_cb);
-}
+}// setup ends here
 
 void loop()
 {
@@ -345,54 +398,7 @@ void loop()
               }
 
             if (displayOn)
-              {
-                 tft.fillScreen(ST7735_BLACK);
-
-                 tft.drawRoundRect(5, 5, 50, 105, 5, ST7735_WHITE);
-                 if (wi[i].percentage >= 0 && wi[i].percentage <= 25)
-                   {
-                      tankColor = ST7735_RED;
-                   }
-                 else if (wi[i].percentage > 25 && wi[i].percentage <= 50)
-                   {
-                      tankColor = ST7735_YELLOW;
-                   }
-                 else
-                   {
-                      tankColor = ST7735_GREEN;
-                   }
-
-                 if (wi[i].percentage > 0)
-                   {
-                      tft.fillRoundRect(5, 110 - wi[i].percentage, 50, wi[i].percentage, 1, tankColor);
-                      tft.drawLine(60, 110 - wi[i].percentage, 60, 110, tankColor);
-                   }
-
-                 tft.setCursor(64, 110 - wi[i].percentage/2);
-                 tft.printf("%dcm", wi[i].distance);
-
-                 //show the reading
-                 tft.setTextSize(2);
-                 tft.setTextColor(tankColor);
-                 tft.setCursor(105, 60);
-                 tft.printf("%d%%", wi[i].percentage);
-                 tft.setTextSize(1);
-                 tft.setCursor(60, 100);
-                 tft.setTextColor(ST7735_WHITE);
-
-                 //draw WiFi icon
-                 tft.drawXBitmap(140, 2, net_wifi4_bits, net_wifi4_width, net_wifi4_height, ST7735_CYAN);
-
-                 //show battery voltage
-                 tft.setCursor(75, 5);
-                 tft.drawXBitmap(63, 5, dish_bits, dish_width, dish_height, ST7735_YELLOW);
-
-                 tft.setTextColor(ST7735_MAGENTA);
-                 tft.printf("%.2fV", wi[i].batteryVoltage/1000.0);
-
-                 tft.setCursor(0, 0);
-                 tft.setTextColor(ST7735_WHITE);
-              }
+              drawReadings(wi[i]);
         }
 
       if (millis() - timestamps[i] >= SLAVE_CONNECTION_TIMEOUT_LIMIT)
@@ -451,10 +457,8 @@ void loop()
               timeout.detach();
               timeout.attach(TFT_SCREEN_TIMEOUT, _timeout_cb);
 
-              testdrawtext("Connecting..", ST7735_WHITE);
-              tft.println("");
-              tft.print("Wait for a moment.");
-
+              //show the last reading.
+              drawReadings(wi[0]);
            }
       }
 }
