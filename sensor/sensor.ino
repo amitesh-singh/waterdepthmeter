@@ -31,7 +31,7 @@
 // ~26 days 
 // for 60s, -- 52 days
 //in seconds
-#define SLEEP_PERIOD 30
+#define SLEEP_PERIOD 60
 #define WIFI_CHANNEL 1
 
 const static u8 triggerPin = 5;  // D1
@@ -65,10 +65,25 @@ static waterinfo wi;
 
 static void resetHCSR04()
 {
-    pinMode(echoPin, OUTPUT);
-    digitalWrite(echoPin, LOW); // send a low pulse to echo pin
-    delayMicroseconds(200);
-    pinMode(echoPin, INPUT);
+    #ifdef DEBUG
+    Serial.println("Resetting HCSR04, pin high");
+    #endif
+    pinMode(dcstepupPin, LOW);
+    delay(100);
+    pinMode(dcstepupPin, HIGH);
+    delay(100);
+    if (digitalRead(echoPin))
+    {
+        #ifdef DEBUG
+        Serial.println("Resetting Echo pin."); 
+        #endif
+        pinMode(echoPin, OUTPUT);
+        digitalWrite(echoPin, LOW); // send a low pulse to echo pin
+        delayMicroseconds(200);
+        pinMode(echoPin, INPUT);
+    }
+    
+   delay(50);
 }
 
 //Code for HCSR04 sonar sensor
@@ -106,8 +121,8 @@ void getDistance()
         digitalWrite(dcstepupPin, HIGH);
         delay(50);
         */
-
-        resetHCSR04();
+        if (digitalRead(echoPin))
+            resetHCSR04();
     }
 
     //29 - at room temperature
@@ -132,13 +147,13 @@ void setup()
 {
     #ifdef DEBUG
     Serial.begin(9600);
-    delay(100);
     #endif
 
     //switch on dc setup to power HC-SR04
     pinMode(dcstepupPin, OUTPUT);
     digitalWrite(dcstepupPin, HIGH);
-
+    // let HCSR04 starts properly
+    delay(50);
     wi.sensorid = SENSOR_ID;
 
     pinMode(triggerPin, OUTPUT);
@@ -150,6 +165,11 @@ void setup()
 
     pinMode(BUILTIN_LED, OUTPUT);
     digitalWrite(BUILTIN_LED, HIGH);
+
+    // fucking unreliable shit module!!
+    // reset HCSR04 every time. 
+    if (digitalRead(echoPin))
+        resetHCSR04();
 
     //init esp-now
     if (esp12e.init(WIFI_STA, ESP_NOW_ROLE_COMBO))
@@ -192,6 +212,7 @@ void setup()
 
     wi.batteryVoltage = ESP.getVcc();
 
+
 #ifdef DEBUG
     Serial.print("Mac Addr: "); Serial.println(WiFi.macAddress());
     Serial.print("System voltage (mV): "); Serial.println(wi.batteryVoltage);
@@ -222,6 +243,8 @@ void loop()
 
     if (retry || retransmit >= 5)
     {
+        if (digitalRead(echoPin))
+            resetHCSR04();
         //then deep sleep
     #ifdef DEBUG
         Serial.println("going to deep sleep...");
