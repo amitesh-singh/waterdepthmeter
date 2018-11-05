@@ -2,6 +2,8 @@
 
 Work in progress.
 
+This runs on my parent's house.
+
 ## Components
 - 2 ESP8266
 - ST7735 1.8" TFT
