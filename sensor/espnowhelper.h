@@ -33,7 +33,6 @@ class espnow
     {
         WiFi.mode(mode);
         WiFi.disconnect();
-        delay(1000);
 
         int ret = esp_now_init();
         if (ret != 0)
